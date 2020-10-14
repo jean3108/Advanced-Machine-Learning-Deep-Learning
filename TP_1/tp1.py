@@ -21,7 +21,7 @@ class Context:
 
 
 class MSE(Function):
-    """Début d'implementation de la fonction MSE"""
+    """MSE(Y,Yhat) = 1/q * (Yhat-Y)**2"""
     @staticmethod
     def forward(ctx, yhat, y):
         
@@ -60,24 +60,26 @@ class linear(Function):
 
     @staticmethod
     def backward(ctx, grad_output):
+        
         """
         ctx : context with saved tensor, here X, W and b 
         grad_output : gradient of the output function (mse) respect to the Linear outputs (Yhat)
                       here, C = L o mse(f(X,W,b), Y) = mse(f(X,W,b), Y)
                       so grad_ouput = grad(mse) respect to Yhat = 2/q * (Yhat-Y)
         """
-        X, W, b = ctx.saved_tensors
-        p, _ = b.shape # output_dim
+        X, W, B = ctx.saved_tensors
+        p = B.shape # output_dim
 
         # compute gradients
-        result_X = grad_output*W.T
-        result_W = grad_output*X.T
-        result_b = grad_output*torch.ones(p)
+        result_X = torch.matmul(grad_output,W.T)
+        result_W = torch.matmul(X.T,grad_output)
+        result_b = grad_output.sum(0)
 
         return result_X, result_W, result_b
 
 
 
 mse = MSE.apply
+lin = linear.apply
 
 
