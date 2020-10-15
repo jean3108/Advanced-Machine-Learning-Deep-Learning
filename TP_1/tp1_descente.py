@@ -1,7 +1,6 @@
 import torch
 from torch.utils.tensorboard import SummaryWriter
-from tp1 import MSE, Linear, Context
-
+from tp1 import MSE, linear, Context
 
 # Les données supervisées
 x = torch.randn(50, 13)
@@ -15,18 +14,27 @@ epsilon = 0.05
 
 writer = SummaryWriter()
 for n_iter in range(100):
-    ##  TODO:  Calcul du forward (loss)
+    # Pass Forward
+    ctx1 = Context()
+    ctx2 = Context()
 
-    # `loss` doit correspondre au coût MSE calculé à cette itération
-    # on peut visualiser avec
-    # tensorboard --logdir runs/
+    yhat = linear.forward(ctx1,x,w,b)
+    loss = MSE.forward(ctx2,yhat,y)
+
+    # Back propagation
+    grad_yhat, grad_y = MSE.backward(ctx2, 1)
+    grad_x, grad_w, grad_b = linear.backward(ctx1, grad_yhat)
+
+    #import ipdb;ipdb.set_trace()
+
+    # Tensorboard visualization
+    # To visualize type command : tensorboard --logdir=runs in current directory
     writer.add_scalar('Loss/train', loss, n_iter)
-
-    # Sortie directe
     print(f"Itérations {n_iter}: loss {loss}")
 
-    ##  TODO:  Calcul du backward (grad_w, grad_b)
+    # Updating parameters
+    w -= epsilon*grad_w
+    b -= epsilon*grad_b
 
-    ##  TODO:  Mise à jour des paramètres du modèle
-
+writer.close()
 

@@ -1,6 +1,3 @@
-# Ne pas oublier d'executer dans le shell avant de lancer python :
-# source /users/Enseignants/piwowarski/venv/amal/3.7/bin/activate
-
 import torch
 from torch.autograd import Function
 from torch.autograd import gradcheck
@@ -53,6 +50,8 @@ class linear(Function):
     """ f(X,W,b) = X @ W.T + b"""
     @staticmethod
     def forward(ctx, X, W, b):
+
+        #import ipdb; ipdb.set_trace()
         ctx.save_for_backward(X,W,b)
         result = torch.matmul(X,W) + b
         
