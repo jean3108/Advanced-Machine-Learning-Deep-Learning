@@ -4,11 +4,11 @@ from tp1 import MSE, linear, Context
 
 # Les données supervisées
 x = torch.randn(50, 13)
-y = torch.randn(50, 3)
+y = torch.randn(50, 1)
 
 # Les paramètres du modèle à optimiser
-w = torch.randn(13, 3)
-b = torch.randn(3)
+w = torch.randn(13, 1)
+b = torch.randn(1)
 
 epsilon = 0.05
 
