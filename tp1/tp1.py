@@ -77,6 +77,43 @@ class linear(Function):
         return result_X, result_W, result_b
 
 
+class Softmax(Function):
+    @staticmethod
+    def forward(ctx, ytilde, y):
+        
+        ## Garde les valeurs nécessaires pour le backwards
+        ctx.save_for_backward(ytilde, y)
+        q, p = ytilde.shape # batch_size, output_dim
+        #import ipdb;ipdb.set_trace()
+        yhat = torch.div(torch.exp(ytilde),torch.sum(torch.exp(ytilde),1).repeat(p,1).T)
+        _, indsY = torch.max(y, 1) # classes à prédire
+        _, indsYhat = torch.max(yhat, 1) # classes prédites
+    
+        #import ipdb; ipdb.set_trace()
+        #correct = float(torch.sum(indsY == indsYhat))
+        #
+        #acc = correct/batch_size
+        result = -(1/q)*torch.sum(torch.sum(torch.log(yhat)*y,1))
+        return result
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        ## Calcul du gradient du module par rapport a chaque groupe d'entrées
+        """
+        ctx : context with saved tensor, here Yhat and Y 
+        grad_output : gradient of the output function (L) respect to the MSE ouputs (C)
+                      here, C = L o mse(Yhat, Y) = Id o mse(Yhat, Y), so grad_ouput = grad(Id) = 1
+        """
+
+        ytilde, y = ctx.saved_tensors
+        q, p = ytilde.shape # batch_size, output_dim
+        yhat = torch.div(torch.exp(ytilde),torch.sum(torch.exp(ytilde),1).repeat(p,1).T)
+        result_y = -(1/q)*ytilde*grad_output
+        result_ytilde = (1/q)*(yhat - y)*grad_output
+        
+        return result_ytilde, result_y
+
+
 
 mse = MSE.apply
 lin = linear.apply
