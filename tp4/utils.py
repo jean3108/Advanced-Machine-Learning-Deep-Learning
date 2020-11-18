@@ -86,12 +86,26 @@ class RNN(nn.Module):
 
 
 class Dataset_temp(Dataset):
+    def __init__(self, data, target, lenght=50):
+        self.data = data
+        self.lenght = lenght
+        self.size = self.data.shape[0]-self.lenght+1
+
+    def __getitem__(self, index):
+        return (self.data[:,index], self.target[:,:,index])
+
+    def __len__(self):
+        return self.size*self.data.shape[1]
+
+class Dataset_temp2(Dataset):
     def __init__(self, data, target):
         self.data = data
         self.target = target
 
     def __getitem__(self, index):
-        return (self.data[:,index], self.target[:,:,index])
+        col = index//self.size
+        lin = index%self.size
+        return (self.data[lin:lin+self.lenght, col], col)
 
     def __len__(self):
         return self.data.shape[2]
