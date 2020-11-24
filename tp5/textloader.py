@@ -33,16 +33,29 @@ def code2string(t):
 
 class TextDataset(Dataset):
     def __init__(self, text: str, *, maxsent=None, maxlen=None):
-        #  TODO:  Creation des phrases
+        maxlen = np.inf if maxlen==None else maxlen
+        phrases = [phrase.strip() for phrase in text.split(".")]
+        phrases = [strs2code(phrase).squeeze(1) for phrase in phrases if len(phrase)>5 and len(phrase)<maxlen]
+        self.phrases = phrases
+        
 
     def __len__(self):
-        #  TODO:  Nombre de phrases
+        return len(self.phrases)
 
     def __getitem__(self, i):
-        #  TODO: 
+        return self.phrases[i]
 
-def collate_fn(samples: List[List[int]]):
-    #  TODO:  Renvoie un batch
+def collate_fn(samples):
+    
+    lenMax = np.max([len(e) for e in samples])
+    res = []
+    eos = torch.tensor([EOS_IX], dtype=torch.int)
+
+    for sample in samples:
+        pads = torch.full((lenMax-len(sample),), PAD_IX, dtype=torch.int)
+        res.append(torch.cat((sample, pads, eos), 0))
+
+    return torch.stack(res)
 
 if __name__ == "__main__":
     test = "C'est. Un. Test."
