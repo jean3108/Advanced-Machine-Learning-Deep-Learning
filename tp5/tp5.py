@@ -17,8 +17,20 @@ from generate import *
 import logging
 logging.basicConfig(level=logging.INFO)
 
-#  TODO:  Implémenter maskedCrossEntropy
+from utils import  string2code, PAD_IX
 
+#  TODO:  Implémenter maskedCrossEntropy
+def maskedCrossEntropy(output, target, padcar=PAD_IX):
+    #Create mask according to target
+    mask = torch.where(target==padcar, torch.tensor(0), torch.tensor(1))
+    #Create critereion without reduction
+    criterion = torch.nn.CrossEntropyLoss(reduction="none")
+    #Compute criterion
+    loss = criterion(output, target)
+    #Aply Mask
+    maskedLoss = loss*mask
+    #Return loss
+    return maskedLoss.sum()/mask.sum()
 
 class RNN(nn.Module):
     #  TODO:  Implémenter comme décrit dans la question 1

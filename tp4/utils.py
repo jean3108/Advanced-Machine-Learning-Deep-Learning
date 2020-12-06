@@ -12,7 +12,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 logging.basicConfig(level=logging.INFO)
 
 #LETTRES = string.ascii_letters + string.punctuation+string.digits+' '
-#LETTRES = string.ascii_letters+' '
 LETTRES = string.ascii_letters[:26]+"."+' '
 id2lettre = dict(zip(range(1, len(LETTRES)+1), LETTRES))
 id2lettre[0] = ''
@@ -46,13 +45,13 @@ def read_temps(path):
 
 class RNN(nn.Module):
     #  TODO:  Implémenter comme décrit dans la question 1
-    def __init__(self, latent_dim, input_dim, output_dim):
+    def __init__(self, latent_dim, input_dim, output_dim, act_encode=torch.tanh, act_decode=torch.tanh):
         super().__init__()
         self.latent_size = latent_dim
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.act_encode = torch.tanh
-        self.act_decode = torch.tanh
+        self.act_encode = act_encode
+        self.act_decode = act_decode
 
         # Network parameters
         self.linearX = nn.Linear(input_dim, latent_dim, bias=True)
@@ -91,11 +90,25 @@ class RNN(nn.Module):
         """
         decode a batch of hidden state
         """
-        return self.act_decode(self.linearD(h))
+        return self.act_decode(self.linearD(h)) if self.act_decode is not None else self.linearD(h)
 
 #Dataset    
 
-class Dataset_temp(Dataset):
+class Dataset_tempClassif(Dataset):
+    def __init__(self, data, target, lenght=50):
+        self.data = data
+        self.lenght = lenght
+        self.size = self.data.shape[0]-self.lenght+1
+
+    def __getitem__(self, index):
+        col = index//self.size
+        lin = index%self.size
+        return (self.data[lin:lin+self.lenght, col], col)
+
+    def __len__(self):
+        return self.size*self.data.shape[1]
+
+class Dataset_tempSerie(Dataset):
     def __init__(self, data, target, lenght=50):
         self.data = data
         self.lenght = lenght
@@ -116,20 +129,7 @@ class Dataset_trump(Dataset):
         self.size = len(data)-self.length+1
 
     def __getitem__(self, index):
-        return self.data[index:index+self.length-1], self.data[index+1:index+self.length]
-
-    def __len__(self):
-        return self.size
-
-
-class Dataset_trumpOld(Dataset):
-    def __init__(self, data, target, length=10):
-        self.data = data
-        self.length = length
-        self.size = len(data)-self.length
-
-    def __getitem__(self, index):
-        return self.data[index:index+self.length], self.data[index+self.length]
+        return self.data[index:index+self.length], False
 
     def __len__(self):
         return self.size
@@ -143,7 +143,8 @@ def cleanTrumpData(s):
     tmp = re.sub(":[^.%]+?\.", ":@.", tmp) # place all no trump speaker by @
     tmp = re.sub("^\s*Trump", "%", tmp[::-1]) #reverse string and replace first Trump by %
     tmp = re.sub("@\s*:[^%]+?%", "%", tmp)  #delete words not say by trump
-    return re.sub("%:", "", tmp)# delete %: wich is just to show wo speaks (but now it is trump every time)
+    tmp = re.sub("%:", "", tmp)# delete %: wich is just to show wo speaks (but now it is trump every time)
+    return tmp.lower()
 
 def normalize(s):
     return ''.join(c for c in unicodedata.normalize('NFD', s) if c in LETTRES)
@@ -155,9 +156,3 @@ def code2string(t):
     if(type(t)!=list):
         t = t.tolist()
     return ''.join(id2lettre[i] for i in t)
-
-def str2code(s):
-    return [lettre2id[c] for c in s]
-
-def strs2code(ss):
-    return torch.LongTensor([str2code(s) for s in ss])
