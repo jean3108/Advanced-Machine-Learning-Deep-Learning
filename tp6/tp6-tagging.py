@@ -10,6 +10,7 @@ import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 import torch
 from typing import List
+import torch.nn.functional as F
 import time
 logging.basicConfig(level=logging.INFO)
 
@@ -112,3 +113,4 @@ test_loader = DataLoader(test_data, collate_fn=collate, batch_size=BATCH_SIZE)
 
 
 #  TODO:  Implémentez le modèle et la boucle d'apprentissage
+
